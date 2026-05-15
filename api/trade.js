@@ -3,27 +3,22 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { 
-    api_key, account_uuid, symbol, action, 
-    volume, stopLoss, takeProfit 
-  } = req.body;
+  const { api_key, account_uuid, symbol, action, volume, stopLoss, takeProfit } = req.body;
 
   if (!api_key || !account_uuid || !symbol || !action || !volume) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  const orderType = action.toLowerCase() === 'buy' ? 0 : 1;
-
   const payload = {
     api_key: api_key,
     account_uuid: account_uuid,
     symbol: symbol.toUpperCase(),
-    type: orderType,
-    volume: parseFloat(volume),
+    type: action === 'buy' ? 0 : 1,
+    volume: Number(volume),
   };
 
-  if (stopLoss) payload.stop_loss = parseFloat(stopLoss);
-  if (takeProfit) payload.take_profit = parseFloat(takeProfit);
+  if (stopLoss) payload.stop_loss = Number(stopLoss);
+  if (takeProfit) payload.take_profit = Number(takeProfit);
 
   try {
     const response = await fetch('https://metatraderapi.dev/v1/trade', {
@@ -34,15 +29,9 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(data.message || 'Trade failed');
-    }
+    if (!response.ok) throw new Error(data.message || 'Trade failed');
 
-    res.status(200).json({ 
-      success: true, 
-      tradeId: data.tradeId,
-      message: 'Trade executed successfully' 
-    });
+    res.status(200).json({ success: true, tradeId: data.tradeId });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
