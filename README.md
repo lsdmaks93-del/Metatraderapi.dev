@@ -1,2 +1,0 @@
-# Metatraderapi.dev
-Api hosting
